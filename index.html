@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Якутское кино</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; }
+    .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    input[type="text"] { padding: 8px; width: 250px; }
+    button { padding: 8px 16px; cursor: pointer; background: #333; color: white; border: none; border-radius: 4px; }
+    .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .movie-card { border: 1px solid #ddd; padding: 10px; border-radius: 8px; text-align: center; display: flex; flex-direction: column; }
+    .movie-card img { width: 100%; height: auto; border-radius: 4px; object-fit: cover; }
+    .movie-title { font-weight: bold; margin: 8px 0 4px; }
+    .movie-year { color: #666; font-size: 0.9em; }
+    .wish-btn { width: 100%; padding: 8px; margin-top: 10px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .wish-btn.active { background: #ff4d4d; }
+    .share-links { margin-top: 8px; font-size: 0.8em; }
+    .share-links a { color: #1DA1F2; margin-right: 10px; text-decoration: none; }
+    .share-links a[href*="vk.com"] { color: #0077FF; }
+  </style>
+</head>
+<body>
+  <h1>Якутское кино</h1>
+  
+  <div class="controls">
+    <input type="text" id="search" placeholder="Поиск по названию..." />
+    <button onclick="sortByYear()">Сортировать по году</button>
+    <button onclick="showMyWishlist()" style="background:#0077FF;">Мой вишлист</button>
+  </div>
+
+  <div class="movies-grid" id="movies-container"></div>
+
+  <script>
+    // Данные (в реальном проекте это будет fetch('movies.json'))
+    const movies = [
+      {
+        "id": 1,
+        "title_ru": "Нуучча",
+        "title_yak": "Нуучча",
+        "year": 2021,
+        "director": "Владимир Мункуев",
+        "duration": "119 мин",
+        "description": "История о ссыльном русском, который оказывается в якутской семье и меняет их жизнь.",
+        "poster_url": "https://via.placeholder.com/300x450?text=Nuuchcha"
+      },
+      {
+        "id": 2,
+        "title_ru": "Чёрный снег",
+        "title_yak": "Хара Хаар",
+        "year": 2020,
+        "director": "Степан Бурнашев",
+        "duration": "84 мин",
+        "description": "Водитель грузовика застревает посреди зимней трассы. Выживание и одиночество в ледяной тишине.",
+        "poster_url": "https://via.placeholder.com/300x450?text=Kara+Khaar"
+      },
+      {
+        "id": 3,
+        "title_ru": "Ыт",
+        "title_yak": "Ыт",
+        "year": 2021,
+        "director": "Степан Бурнашев, Дмитрий Давыдов",
+        "duration": "97 мин",
+        "description": "Альманах из нескольких историй о деревенской жизни, где бытовые конфликты оборачиваются драмой.",
+        "poster_url": "https://via.placeholder.com/300x450?text=Yt"
+      }
+    ];
+
+    // Вишлист (хранится в браузере пользователя)
+    let wishlist = JSON.parse(localStorage.getItem('yakut_wishlist')) || [];
+
+    function toggleWishlist(id) {
+      const index = wishlist.indexOf(id);
+      if (index > -1) {
+        wishlist.splice(index, 1);
+      } else {
+        wishlist.push(id);
+      }
+      localStorage.setItem('yakut_wishlist', JSON.stringify(wishlist));
+      render(movies); // Перерисовать, чтобы кнопки обновились
+    }
+
+    function showMyWishlist() {
+      if (wishlist.length === 0) {
+        alert('Твой вишлист пуст!');
+        return;
+      }
+      const filtered = movies.filter(m => wishlist.includes(m.id));
+      // Просто покажем список в alert для простоты, можно сделать отдельную страницу
+      const names = filtered.map(m => m.title_ru).join(', ');
+      alert('Ты хочешь посмотреть:\n' + names);
+    }
+
+    function sortByYear() {
+      movies.sort((a, b) => a.year - b.year);
+      render(movies);
+    }
+
+    function render(list) {
+      const container = document.getElementById('movies-container');
+      container.innerHTML = '';
+
+      list.forEach(m => {
+        const isInWishlist = wishlist.includes(m.id);
+        const btnText = isInWishlist ? '❤️ В избранном' : '🤍 Хочу посмотреть';
+        const btnClass = isInWishlist ? 'active' : '';
+
+        // Ссылка для соцсетей: якорь к этому фильму
+        // Замени https://ТВОЙ-НИК.github.io/yakut-cinema на реальный адрес после публикации
+        const baseUrl = 'https://ТВОЙ-НИК.github.io/yakut-cinema'; 
+
+        const card = document.createElement('div');
+        card.className = 'movie-card';
+        card.innerHTML = `
+          <div id="movie-${m.id}" style="scroll-margin-top: 80px;"></div>
+          <img src="${m.poster_url}" alt="${m.title_ru}" />
+          <div class="movie-title">${m.title_ru}</div>
+          <div class="movie-year">${m.year}</div>
+          <p style="font-size:0.85em; color:#555;">${m.director}</p>
+          
+          <button class="wish-btn ${btnClass}" onclick="toggleWishlist(${m.id})">${btnText}</button>
+          
+          <div class="share-links">
+            Поделиться:
+            <a href="https://vk.com/share.php?url=${baseUrl}#movie-${m.id}&title=Смотри фильм ${m.title_ru}" target="_blank">VK</a>
+            <a href="https://twitter.com/intent/tweet?text=Хочу посмотреть фильм ${m.title_ru}. Смотри тут: ${baseUrl}#movie-${m.id}" target="_blank">X</a>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Поиск
+    document.getElementById('search').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      const filtered = movies.filter(m =>
+        m.title_ru.toLowerCase().includes(q) ||
+        m.title_yak.toLowerCase().includes(q)
+      );
+      render(filtered);
+    });
+
+    // Первоначальная отрисовка
+    render(movies);
+  </script>
+</body>
+</html>
+
